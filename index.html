@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>Socket.IO chat app</title>
+        <link rel="stylesheet" type="text/css" href="/style.css"/>
+    </head>
+    <body>
+        <div id="container">
+            <div class="left-side">
+                <div class="chat-room-header">
+                    <span class="chat-room-label">Chat Room</span>
+                </div>
+            </div>
+            <div class="right-side">
+                <div class="chat-room-header">
+                    <span class="chat-room-label">Messages</span>
+
+                    <div id="userCount">&nbsp;</div>
+                </div>
+                <ul id="messages"></ul>
+                <form id="message-form">
+                    <div id="message-box">
+                        <input id="m" class="input-msg" type="text" autocomplete="off" placeholder="message"/>
+                        <button class="send-btn">Send</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+
+        <script>
+            $(function () {
+
+              console.log(localStorage.getItem('token'));
+              if(!localStorage.getItem('ochat-token')){               
+                location='/pages/auth.html';
+              }
+              const socket = io();
+
+              socket.on('users count', function (users) {
+                  $('#userCount').text(users);
+              });
+
+              $("#message-form").submit(function (e) {
+                  e.preventDefault();
+                  socket.emit("chat message", $("#m").val(), $("#client").val());
+                  $("#m").val("");
+                  return false;
+              });
+
+              socket.on('chat message', function (msg) {
+                  $('#messages').append($('<li>').text(msg));
+              });
+
+            });
+        </script>
+    </body>
+</html>
