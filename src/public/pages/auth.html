@@ -35,12 +35,18 @@
 
         $("#login-form").submit(function (e) {
           e.preventDefault();
-          socket.emit("register user", $("#username").val(),  $("#password").val());
+          socket.emit(
+            "register user",
+            $("#username").val(),
+            $("#password").val()
+          );
           return false;
         });
 
         socket.on("register user", function (msg) {
           localStorage.setItem("ochat-token", msg);
+
+          document.location.href = "/";
         });
       });
     </script>

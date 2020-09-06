@@ -1,15 +1,28 @@
 const express = require("express");
+
 const mongoose = require("mongoose");
 const app = express();
 const http = require("http").createServer(app);
 const io = require("socket.io")(http);
 const usersRoutes = require("./routes/users-route");
 const { UserService } = require("./services/users.service");
+
+var config = JSON.parse(process.env.APP_CONFIG);
+const mongoPassword = config.mongo.password;
+
 mongoose
-  .connect("mongodb://localhost/ochat", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(
+    "mongodb://" +
+      config.mongo.user +
+      ":" +
+      encodeURIComponent(mongoPassword) +
+      "@" +
+      config.mongo.hostString,
+    {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    }
+  )
   .then(() => {
     console.log("Connected to db...");
   })
@@ -40,7 +53,7 @@ io.on("connection", async (socket) => {
       onlineUsers.push(currentUser.username);
     }
 
-    socket.on("online users", (users) => {      
+    socket.on("online users", (users) => {
       users = { onlineUsers: onlineUsers };
       io.emit("online users", users);
     });
