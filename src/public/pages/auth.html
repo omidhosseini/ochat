@@ -1,49 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Register</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register</title>
 
-        <link rel="stylesheet" type="text/css" href="/style.css"/>
-    </head>
-    <body>
-        <div class="container">
-            <div class="login-container">
-                <div class="login-body">
-                    <div class="login-header">
-                        <span>LOGIN</span>
-                    </div>
-                    <form id="login-form">
-                        <label for="username">Username:
-                        </label>
-                        <input type="text" name="username" id="username">
-                        <button>submit</button>
-                    </form>
-                </div>
-            </div>
+    <link rel="stylesheet" type="text/css" href="/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="login-container">
+        <div class="login-body">
+          <div class="login-header">
+            <span>LOGIN</span>
+          </div>
+          <form id="login-form">
+            <label for="username">Username: </label>
+            <input type="text" name="username" id="username" />
+
+            <label for="username">Password: </label>
+            <input type="password" name="password" id="password" />
+            <button>submit</button>
+          </form>
         </div>
+      </div>
+    </div>
 
-        <script src="/socket.io/socket.io.js"></script>
-        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
 
-        <script>
-            $(function () { 
+    <script>
+      $(function () {
+        const socket = io();
 
-                const socket = io();
-                
+        $("#login-form").submit(function (e) {
+          e.preventDefault();
+          socket.emit("register user", $("#username").val(),  $("#password").val());
+          return false;
+        });
 
-                $("#login-form").submit(function (e) {      
-                    e.preventDefault(); 
-                    socket.emit("register user", $("#username").val());
-                    return false;
-                });
-
-                socket.on('register user', function (msg) {                     
-                     localStorage.setItem('ochat-token', msg);
-                });
-
-            });
-        </script>
-    </body>
+        socket.on("register user", function (msg) {
+          localStorage.setItem("ochat-token", msg);
+        });
+      });
+    </script>
+  </body>
 </html>
