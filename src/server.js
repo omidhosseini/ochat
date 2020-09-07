@@ -7,17 +7,19 @@ const io = require("socket.io")(http);
 const usersRoutes = require("./routes/users-route");
 const { UserService } = require("./services/users.service");
 
-var config = JSON.parse(process.env.APP_CONFIG);
+// var config = JSON.parse(process.env.APP_CONFIG); // Production
+const cfg = require("./config/config.development.json");
+var config = cfg.APP_CONFIG; // Development
 const mongoPassword = config.mongo.password;
 
 mongoose
-  .connect(
-    "mongodb://" +
-      config.mongo.user +
-      ":" +
-      encodeURIComponent(mongoPassword) +
-      "@" +
-      config.mongo.hostString,
+  .connect( 
+    "mongodb://localhost/ochat",// +
+      // config.mongo.user +
+      // ":" +
+      // encodeURIComponent(mongoPassword) +
+      // "@" +
+      // config.mongo.hostString,
     {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -26,7 +28,7 @@ mongoose
   .then(() => {
     console.log("Connected to db...");
   })
-  .catch((err) => console.log("Could not connect to db"));
+  .catch((err) => console.log("Could not connect to db", err));
 
 app.use(express.static("public"));
 
@@ -75,6 +77,10 @@ io.on("connection", async (socket) => {
       const users = { onlineUsers: onlineUsers };
       io.emit("online users", users);
     });
+
+    socket.on('buzz', (socket)=>{
+      io.emit('buzz', `${currentUser} buzzed!!!`);
+    })
   } else {
     socket.on("register user", async (username, password) => {
       const service = new UserService();

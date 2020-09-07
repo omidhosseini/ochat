@@ -59,12 +59,23 @@
         socket.emit("online users", "");
         socket.on("online users", function (users) {
           $("#usersList").html("");
-          $("#userCount").text(users.onlineUsers.length );
+          $("#userCount").text(users.onlineUsers.length);
 
           users.onlineUsers.forEach((user) => {
             console.log(user);
             $("#usersList").append($("<li>").text(user));
           });
+        });
+
+        $("body").on("keydown", function (e) {
+          if (e.ctrlKey && (e.which == 71 || e.which == 101))
+            socket.emit("buzz", "buzzed!!", $("#client").val());
+        });
+
+        socket.on("buzz", function (msg) {
+          const buzzSound = new Audio("/piggy.mp3");
+          buzzSound.play();
+          $("#messages").append($("<li>").text(msg));
         });
       });
     </script>

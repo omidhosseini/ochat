@@ -1,0 +1,10 @@
+{
+  "APP_CONFIG": {
+    "mongo": {
+      "hostString": "localhost",
+      "user": "",
+      "db": "ochat",
+      "password": ""
+    }
+  }
+}
