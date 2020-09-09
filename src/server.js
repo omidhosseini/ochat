@@ -81,6 +81,13 @@ io.on("connection", async (socket) => {
     socket.on('buzz', (socket)=>{
       io.emit('buzz', `${currentUser} buzzed!!!`);
     })
+
+
+    socket.on('send voice', (stream)=>{
+      console.log('streaming...', stream);
+      io.emit('receive voice', stream);
+    })
+
   } else {
     socket.on("register user", async (username, password) => {
       const service = new UserService();
