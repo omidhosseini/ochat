@@ -1,151 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Socket.IO chat app</title>
-    <link rel="stylesheet" type="text/css" href="/style.css" />
-  </head>
-  <body>
-    <div id="container">
-      <div class="left-side">
-        <div class="chat-room-header">
-          <span class="chat-room-label">Chat Room</span>
-          <ul id="usersList"></ul>
-          <audio class="play"></audio>
+    <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>Socket.IO chat app</title>
+        <link rel="stylesheet" type="text/css" href="/style.css"/>
+    </head>
+    <body>
+        <div id="container">
+            <div class="left-side">
+                <div class="chat-room-header">
+                    <span class="chat-room-label">Chat Room</span>
+                    <ul id="usersList"></ul>
+                </div>
+            </div>
+            <div class="right-side">
+                <div class="chat-room-header">
+                    <span class="chat-room-label">Messages</span>
+
+                    <div id="userCount">&nbsp;</div>
+                </div>
+                <ul id="messages"></ul>
+                <form id="message-form">
+                    <div id="message-box">
+                        <input id="m" class="input-msg" type="text" autocomplete="off" placeholder="message"/>
+                        <button class="send-btn">Send</button>
+                        <button id="voice" class="send-btn">Voice</button>
+                    </div>
+                </form>
+            </div>
         </div>
-      </div>
-      <div class="right-side">
-        <div class="chat-room-header">
-          <span class="chat-room-label">Messages</span>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+        <script src="js/audio-encoder.js" type="text/javascript"></script>
+        <script src="js/FileSaver.js" type="text/javascript"></script>
 
-          <div id="userCount">&nbsp;</div>
-        </div>
-        <ul id="messages"></ul>
-        <form id="message-form">
-          <div id="message-box">
-            <input
-              id="m"
-              class="input-msg"
-              type="text"
-              autocomplete="off"
-              placeholder="message"
-            />
-            <button class="send-btn">Send</button>
-          </div>
-        </form>
-      </div>
-    </div>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-
-    <script>
-      $(function () {
-        const token = localStorage.getItem("ochat-token");
-        if (!token) {
-          location = "/pages/auth.html";
-        }
-        const socket = io.connect("/", { query: { token } });
-
-        $("#message-form").submit(function (e) {
-          e.preventDefault();
-          socket.emit("chat message", $("#m").val(), $("#client").val());
-          $("#m").val("");
-          return false;
-        });
-        socket.on("chat message", function (msg) {
-          $("#messages").append($("<li>").text(msg));
-        });
-
-        socket.emit("online users", "");
-        socket.on("online users", function (users) {
-          $("#usersList").html("");
-          $("#userCount").text(users.onlineUsers.length);
-
-          users.onlineUsers.forEach((user) => {
-            console.log(user);
-            $("#usersList").append($("<li>").text(user));
-          });
-        });
-
-        $("body").on("keydown", function (e) {
-          if (e.ctrlKey && (e.which == 71 || e.which == 101))
-            socket.emit("buzz", "buzzed!!", $("#client").val());
-        });
-
-        let mediaRecorder;
-        let chunck = [];
-
-        $("body")
-          .mousedown(function (e) {
-            navigator.mediaDevices
-              .getUserMedia({ audio: true })
-              .then((stream) => {
-                mediaRecorder = new MediaRecorder(stream);
-
-                mediaRecorder.start();
-                console.log(mediaRecorder.state);
-
-                mediaRecorder.ondataavailable = function (e) {
-                  chunck.push(e.data);
-                  socket.emit("send voice", e.data);
-                };
-              });
-          })
-          .mouseup(function (e) {
-            mediaRecorder.stop();
-          });
-
-        socket.on("receive voice", async function (stream) {
-          const audioContext = new AudioContext();
-
-          const audioBufferChunk = await audioContext.decodeAudioData(
-            stream,
-            (channels) => {
-              console.log("success", channels);
-              let frameCount = audioContext.sampleRate * 2.0;
-              let myArrayBuffer = audioContext.createBuffer(
-                channels.numberOfChannels,
-                frameCount,
-                audioContext.sampleRate
-              );
-
-              // Fill the buffer with white noise;
-              //just random values between -1.0 and 1.0
-              for (let channel = 0; channel < channels; channel++) {
-                // This gives us the actual array that contains the data
-                let nowBuffering = myArrayBuffer.getChannelData(channel);
-                for (let i = 0; i < frameCount; i++) {
-                  // Math.random() is in [0; 1.0]
-                  // audio needs to be in [-1.0; 1.0]
-                  nowBuffering[i] = Math.random() * 2 - 1;
+        <script>
+            $(function () {
+                const token = localStorage.getItem("ochat-token");
+                if (! token) {
+                    location = "/pages/auth.html";
                 }
-              }
+                const socket = io.connect("/", {query: {
+                        token
+                    }});
 
-              // Get an AudioBufferSourceNode.
-              // This is the AudioNode to use when we want to play an AudioBuffer
-              let source = audioContext.createBufferSource();
-              // set the buffer in the AudioBufferSourceNode
-              source.buffer = myArrayBuffer;
-              // connect the AudioBufferSourceNode to the
-              // destination so we can hear the sound
-              source.connect(audioContext.destination);
-              // start the source playing
-              source.start();
+                $("#message-form").submit(function (e) {
+                    e.preventDefault();
+                    socket.emit("chat message", $("#m").val(), $("#client").val());
+                    $("#m").val("");
+                    return false;
+                });
+                socket.on("chat message", function (msg) {
+                    $("#messages").append($("<li>").text(msg));
+                });
 
-              console.log(source);
- 
-            }
-          ); 
-          
-        });
+                socket.emit("online users", "");
+                socket.on("online users", function (users) {
+                    $("#usersList").html("");
+                    $("#userCount").text(users.onlineUsers.length);
 
-        socket.on("buzz", function (msg) {
-          const buzzSound = new Audio("/piggy.mp3");
-          buzzSound.play();
-          $("#messages").append($("<li>").text(msg));
-        });
-      });
-    </script>
-  </body>
+                    users.onlineUsers.forEach((user) => {
+                        console.log(user);
+                        $("#usersList").append($("<li>").text(user));
+                    });
+                });
+
+                $("body").on("keydown", function (e) {
+                    if (e.ctrlKey && (e.which == 71 || e.which == 101)) 
+                        socket.emit("buzz", "buzzed!!", $("#client").val());
+                    
+
+
+                });
+
+                let mediaRecorder;
+                let chunck = [];
+
+                $("#voice").mousedown(function (e) {
+                    navigator.mediaDevices.getUserMedia({audio: true}).then((stream) => {
+                        mediaRecorder = new MediaRecorder(stream);
+
+                        mediaRecorder.start();
+                        mediaRecorder.ondataavailable = function (e) {
+                            socket.emit("send voice", e.data);
+                        };
+                    });
+                }).mouseup(function (e) {
+                    mediaRecorder.stop();
+                });
+
+                socket.on("receive voice", async function (message) {
+                    const audioContext = new AudioContext();
+                    const voice = message.voice;
+
+                    const audioBufferChunk = await audioContext.decodeAudioData(voice, async (buffer) => {});
+
+                    chunck.push({c: audioBufferChunk, t: message.time});
+
+                    let source = audioContext.createBufferSource();
+                    // // set the buffer in the AudioBufferSourceNode
+                    source.buffer = audioBufferChunk;
+
+                    const streamNode = audioContext.createMediaStreamDestination();
+                    source.connect(streamNode);
+
+                    const audioElem = new Audio();
+                    // audioElem.srcObject = streamNode.stream;
+                     audioElem.preload = false;
+                     audioElem.controls = true;
+                     audioElem.duration = streamNode.duration;
+                    source.start(0);
+                    $("#messages").append(audioElem);
+                    
+                    audioEncoder(audioBufferChunk, 'WAV', null, function onComplete(blob) {
+                        audioElem.srcObject = blob;
+                         saveAs(blob, '/public/sound.WAV');
+                    }); 
+
+                    
+
+                });
+
+                socket.on("buzz", function (msg) {
+                    const buzzSound = new Audio("/piggy.mp3");
+                    buzzSound.play();
+                    $("#messages").append($("<li>").text(msg));
+                });
+
+
+            });
+        </script>
+    </body>
 </html>

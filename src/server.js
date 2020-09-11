@@ -9,6 +9,7 @@ const { UserService } = require("./services/users.service");
 
 // var config = JSON.parse(process.env.APP_CONFIG); // Production
 const cfg = require("./config/config.development.json");
+const { date } = require("joi");
 var config = cfg.APP_CONFIG; // Development
 const mongoPassword = config.mongo.password;
 
@@ -57,6 +58,7 @@ io.on("connection", async (socket) => {
 
     socket.on("online users", (users) => {
       users = { onlineUsers: onlineUsers };
+      // console.log(users);
       io.emit("online users", users);
     });
 
@@ -79,13 +81,16 @@ io.on("connection", async (socket) => {
     });
 
     socket.on('buzz', (socket)=>{
-      io.emit('buzz', `${currentUser} buzzed!!!`);
+      io.emit('buzz', `${currentUser.username} buzzed!!!`);
     })
 
 
     socket.on('send voice', (stream)=>{
       console.log('streaming...', stream);
-      io.emit('receive voice', stream);
+      let message = {user: currentUser.username, time: new Date().getTime(), voice: stream}
+
+      console.log('streaming...', message);
+      io.emit('receive voice', message);
     })
 
   } else {
